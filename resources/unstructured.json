@@ -1,5 +1,13 @@
 [
   {
+    "header": "=?utf-8?Q?Peri=C3=B1an?= missing\r\n text",
+    "expected": "Periñan missing text"
+  },
+  {
+    "header": "=?utf-8?Q?Peri=C3=B1an?=",
+    "expected": "Periñan"
+  },
+  {
     "header": "Saying Hello\n",
     "expected": "Saying Hello"
   },

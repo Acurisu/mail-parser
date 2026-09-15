@@ -1,5 +1,17 @@
 [
   {
+    "header": "<eof@example.test>",
+    "expected": ["eof@example.test"]
+  },
+  {
+    "header": "<first@example.test>\r\n <second@example.test>",
+    "expected": ["first@example.test", "second@example.test"]
+  },
+  {
+    "header": "unbracketed@example.test",
+    "expected": ["unbracketed@example.test"]
+  },
+  {
     "header": "<1234@local.machine.example>\n",
     "expected": [
       "1234@local.machine.example"

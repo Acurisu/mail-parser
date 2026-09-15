@@ -304,7 +304,9 @@ impl<'x> MessageStream<'x> {
                     }
                 }
                 b'\n' => {
-                    let next_is_space = self.peek_next_is_space();
+                    if !self.peek_next_is_space() {
+                        break;
+                    }
                     match parser.state {
                         ContentState::Type
                         | ContentState::AttributeName
@@ -315,47 +317,23 @@ impl<'x> MessageStream<'x> {
                             parser.add_value(self);
                         }
                         ContentState::AttributeQuotedValue => {
-                            if next_is_space {
-                                self.next();
-                                parser.remove_crlf = true;
-                                continue;
-                            } else {
-                                parser.add_value(self);
-                            }
+                            self.next();
+                            parser.remove_crlf = true;
+                            continue;
                         }
                         _ => (),
                     }
 
-                    if next_is_space {
-                        if parser.state == ContentState::Type {
-                            continue;
-                        }
-                        parser.state = ContentState::AttributeName;
-                        self.next();
-
-                        if !parser.is_token_start {
-                            parser.is_token_start = true;
-                        }
+                    if parser.state == ContentState::Type {
                         continue;
-                    } else {
-                        if parser.continuations.is_some() {
-                            parser.merge_continuations();
-                        }
-
-                        return if let Some(content_type) = parser.c_type {
-                            HeaderValue::ContentType(ContentType {
-                                c_type: content_type,
-                                c_subtype: parser.c_subtype.take(),
-                                attributes: if !parser.attributes.is_empty() {
-                                    Some(parser.attributes)
-                                } else {
-                                    None
-                                },
-                            })
-                        } else {
-                            HeaderValue::Empty
-                        };
                     }
+                    parser.state = ContentState::AttributeName;
+                    self.next();
+
+                    if !parser.is_token_start {
+                        parser.is_token_start = true;
+                    }
+                    continue;
                 }
                 b'/' if parser.state == ContentState::Type => {
                     parser.add_attribute(self);
@@ -511,7 +489,32 @@ impl<'x> MessageStream<'x> {
             }
         }
 
-        HeaderValue::Empty
+        match parser.state {
+            ContentState::Type | ContentState::AttributeName | ContentState::SubType => {
+                parser.add_attribute(self);
+            }
+            ContentState::AttributeValue | ContentState::AttributeQuotedValue => {
+                parser.add_value(self);
+            }
+            _ => (),
+        }
+        if parser.continuations.is_some() {
+            parser.merge_continuations();
+        }
+
+        if let Some(content_type) = parser.c_type {
+            HeaderValue::ContentType(ContentType {
+                c_type: content_type,
+                c_subtype: parser.c_subtype.take(),
+                attributes: if !parser.attributes.is_empty() {
+                    Some(parser.attributes)
+                } else {
+                    None
+                },
+            })
+        } else {
+            HeaderValue::Empty
+        }
     }
 }
 #[cfg(test)]

@@ -50,17 +50,11 @@ impl<'x> MessageStream<'x> {
         while let Some(ch) = self.next() {
             match ch {
                 b'\n' => {
-                    parser.add_token(self);
-
                     if !self.try_next_is_space() {
-                        return match parser.tokens.len() {
-                            1 => HeaderValue::Text(parser.tokens.pop().unwrap()),
-                            0 => HeaderValue::Empty,
-                            _ => HeaderValue::Text(parser.tokens.concat().into()),
-                        };
-                    } else {
-                        continue;
+                        break;
                     }
+                    parser.add_token(self);
+                    continue;
                 }
                 b' ' | b'\t' | b'\r' => {
                     continue;
@@ -84,7 +78,12 @@ impl<'x> MessageStream<'x> {
             parser.token_end = self.offset();
         }
 
-        HeaderValue::Empty
+        parser.add_token(self);
+        match parser.tokens.len() {
+            1 => HeaderValue::Text(parser.tokens.pop().unwrap()),
+            0 => HeaderValue::Empty,
+            _ => HeaderValue::Text(parser.tokens.concat().into()),
+        }
     }
 }
 

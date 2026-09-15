@@ -150,3 +150,29 @@ R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7
         "Book about ☕ tables.gif"
     );
 }
+
+#[test]
+fn headers_at_eof_survive_full_header_only_and_embedded_parsing() {
+    let parser = MessageParser::default();
+    for input in [
+        "Subject: Nested\r\nMessage-ID: <nested@example.test>",
+        "Message-ID: <nested@example.test>\r\nSubject: Nested",
+    ] {
+        for message in [
+            parser.parse(input).unwrap(),
+            parser.parse_headers(input).unwrap(),
+        ] {
+            assert_eq!(message.subject(), Some("Nested"));
+            assert_eq!(message.message_id(), Some("nested@example.test"));
+        }
+
+        let encoded = format!(
+            "Content-Type: message/rfc822\r\n\
+             Content-Transfer-Encoding: quoted-printable\r\n\r\n{input}"
+        );
+        let outer = parser.parse(&encoded).unwrap();
+        let nested = outer.attachment(0).unwrap().message().unwrap();
+        assert_eq!(nested.subject(), Some("Nested"));
+        assert_eq!(nested.message_id(), Some("nested@example.test"));
+    }
+}

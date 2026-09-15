@@ -19,19 +19,7 @@ impl<'x> MessageStream<'x> {
             match ch {
                 b'\n' => {
                     if !self.try_next_is_space() {
-                        return match ids.len() {
-                            1 => HeaderValue::Text(ids.pop().unwrap()),
-                            0 => {
-                                if token_invalid_start > 0 {
-                                    HeaderValue::Text(String::from_utf8_lossy(
-                                        self.bytes(token_invalid_start - 1..token_invalid_end),
-                                    ))
-                                } else {
-                                    HeaderValue::Empty
-                                }
-                            }
-                            _ => HeaderValue::TextList(ids),
-                        };
+                        break;
                     } else {
                         continue;
                     }
@@ -67,7 +55,19 @@ impl<'x> MessageStream<'x> {
             }
         }
 
-        HeaderValue::Empty
+        match ids.len() {
+            1 => HeaderValue::Text(ids.pop().unwrap()),
+            0 => {
+                if token_invalid_start > 0 {
+                    HeaderValue::Text(String::from_utf8_lossy(
+                        self.bytes(token_invalid_start - 1..token_invalid_end),
+                    ))
+                } else {
+                    HeaderValue::Empty
+                }
+            }
+            _ => HeaderValue::TextList(ids),
+        }
     }
 }
 #[cfg(test)]

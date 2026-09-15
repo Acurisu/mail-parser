@@ -1,5 +1,21 @@
 [
   {
+    "header": "text/plain; charset=utf-8",
+    "expected": {
+      "c_type": "text",
+      "c_subtype": "plain",
+      "attributes": [["charset", "utf-8"]]
+    }
+  },
+  {
+    "header": "attachment; filename*0=\"report\";\r\n filename*1=\".txt\"",
+    "expected": {
+      "c_type": "attachment",
+      "c_subtype": null,
+      "attributes": [["filename", "report.txt"]]
+    }
+  },
+  {
     "header": "audio/basic\n",
     "expected": {
       "c_type": "audio",

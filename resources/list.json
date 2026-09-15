@@ -1,5 +1,9 @@
 [
   {
+    "header": "first,\r\n =?utf-8?Q?second?= item",
+    "expected": ["first", "second item"]
+  },
+  {
     "header": " one item  \n",
     "expected": [
       "one item"
